@@ -18,7 +18,7 @@
 
 | コマンド | 内容 |
 | --- | --- |
-| `make setup` | 環境を作ります（ビルド、パッケージのインストール、テーブルの作成）。初回だけ使います |
+| `make setup` | 環境を作ります（ビルド、パッケージのインストール、テーブルの作成）。初回だけ使います。もう一度実行しても、データは消えません |
 | `make up` | コンテナを起動します。記録がターミナルに出続けます。`Ctrl + C` で止まります |
 | `make upd` | コンテナを、バックグラウンドで起動します |
 | `make stop` | コンテナを止めます |
@@ -63,7 +63,7 @@
 $ make py/add TARGET=requests
 ```
 
-`py/add` と `py/add-d` は、追加のあとに、コンテナのビルドも行います。
+追加したパッケージは、すぐに使えます。コンテナのビルドは要りません。
 
 `git pull` で `pyproject.toml` や `poetry.lock` が変わったときは、`make py/install` を実行してください。
 
@@ -75,11 +75,13 @@ $ make py/add TARGET=requests
 
 | コマンド | 内容 |
 | --- | --- |
-| `make db/migrate` | 全テーブルを削除して、作り直します。**データは消えます** |
-| `make db/reset` | `make db/migrate` と同じです |
+| `make db/migrate` | まだないテーブルを作ります。すでにあるテーブルとデータは、そのまま残ります |
+| `make db/reset` | データベースにある全テーブルを削除して、作り直します。**データは消えます** |
 | `make db/repl` | MySQL に接続して、SQL を入力できる状態にします。`exit` で抜けます |
 
-モデル（テーブルの定義）を足したり変えたりしたときは、`make db/migrate` を実行してください。
+モデル（テーブルの定義）を足したときは、`make db/migrate` を実行してください。
+
+すでにあるテーブルの形（列の追加や変更）は、`make db/migrate` では変わりません。変えたときは、`make db/reset` で作り直してください（データは消えます）。
 
 データベースを見るソフトウェア（TablePlus など）からつなぐ場合は、次の設定を使います。
 
@@ -100,5 +102,5 @@ $ make py/add TARGET=requests
 | コマンド | 内容 |
 | --- | --- |
 | `make python/login` | API のコンテナのシェルに入ります。`exit` で抜けます |
-| `make python/repl` | Python の対話環境を開きます。`exit()` で抜けます |
+| `make python/repl` | Python の対話環境を開きます。インストールしたパッケージや、`api` のプログラムを読み込めます。`exit()` で抜けます |
 | `make db/login` | データベースのコンテナのシェルに入ります。`exit` で抜けます |
