@@ -28,25 +28,24 @@ ps:
 
 
 ## DB操作系
-# DBのマイグレーション（全テーブルを削除して、作り直す）
+# DBのマイグレーション（まだないテーブルを作る。データは残る）
 db/migrate:
 	docker compose exec api poetry run python -m api.migrate_db
-# DBのリセット（マイグレーションと同じ）
-db/reset: db/migrate
+# DBのリセット（全テーブルを削除して、作り直す。データは消える）
+db/reset:
+	docker compose exec api poetry run python -m api.migrate_db --reset
 
 
 ## Poetry操作系
 # パッケージインストール
 py/install:
-	docker compose run --rm --entrypoint "poetry install --no-root" api
+	docker compose run --rm --no-deps api poetry install --no-root
 # パッケージ追加
 py/add:
 	docker compose exec api poetry add $(TARGET)
-	docker compose build --no-cache
 # パッケージ追加（devDependency）
 py/add-d:
 	docker compose exec api poetry add -G dev $(TARGET)
-	docker compose build --no-cache
 # コード修正
 py/fix: py/fix-lint py/fix-format
 # コード修正（リンター）
@@ -77,7 +76,7 @@ python/login:
 	docker compose exec api bash
 # pythonコンテナのpythonのrepl
 python/repl:
-	docker compose exec api python
+	docker compose exec api poetry run python
 # dbコンテナのシェル
 db/login:
 	docker compose exec db bash
@@ -90,7 +89,7 @@ db/repl:
 # セットアップ
 setup:
 	docker compose build
-	docker compose run --rm --no-deps --entrypoint "poetry install --no-root" api
+	docker compose run --rm --no-deps api poetry install --no-root
 	docker compose up -d --force-recreate --wait
 	docker compose exec api poetry run python -m api.migrate_db
 	docker compose stop

@@ -160,3 +160,7 @@ cython_debug/
 
 # misc
 .DS_Store
+
+# コンテナ用の仮想環境と、道具のキャッシュ
+.dockervenv/
+.ruff_cache/

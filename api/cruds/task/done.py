@@ -3,22 +3,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import api.models.task.index as task_model
 
 
-async def change_is_done_of_task(
-    db: AsyncSession, is_done: bool, target_task: task_model.Task
-) -> task_model.Task:
+async def change_is_done(db: AsyncSession, task: task_model.Task, is_done: bool) -> task_model.Task:
     """
-    タスクの完了フラグ更新
+    タスクの完了状態の更新
 
     Args:
-        db (Session): SQLAlchemyのデータベースセッションオブジェクト。
-        is_done (bool): タスクの完了状態。
-        target_task (task_schema.Task): 更新対象のタスクのオブジェクト。
+        db (AsyncSession): SQLAlchemyのデータベースセッションオブジェクト。
+        task (task_model.Task): 更新対象のタスクのオブジェクト。
+        is_done (bool): 更新後の完了状態。
 
     Returns:
         task_model.Task: 更新したタスクのオブジェクト。
     """
-    target_task.is_done = is_done
-    db.add(target_task)
+    task.is_done = is_done
     await db.commit()
-    await db.refresh(target_task)
-    return target_task
+    return task

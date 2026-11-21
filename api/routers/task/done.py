@@ -1,19 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter
 
 import api.cruds.task.done as done_crud
-import api.cruds.task.index as task_crud
+import api.models.task.index as task_model
 import api.schemas.task.index as task_schema
-from api.db import get_db
+from api.db import DbSession
+from api.routers.task.dependencies import TargetTask
 
+# パスの前半（/tasks）とタグは、取り込む側の routers/task/index.py で付けている。
 router = APIRouter()
 
 
-# タスクの完了状態の更新
-@router.put("/tasks/{task_id}/done", tags=["task"], response_model=task_schema.Task)
-async def change_is_done_of_task(task_id: int, db: AsyncSession = Depends(get_db)):
-    task = await task_crud.get_task(db, task_id)
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+# タスクを完了にする
+# 何度呼んでも結果が同じになるように、「切り替え」ではなく「完了にする」にしている。
+@router.put("/{task_id}/done", response_model=task_schema.Task)
+async def mark_task_as_done(task: TargetTask, db: DbSession) -> task_model.Task:
+    return await done_crud.change_is_done(db, task, is_done=True)
 
-    return await done_crud.change_is_done_of_task(db, is_done=(not task.is_done), target_task=task)
+
+# タスクを未完了に戻す
+@router.delete("/{task_id}/done", response_model=task_schema.Task)
+async def mark_task_as_not_done(task: TargetTask, db: DbSession) -> task_model.Task:
+    return await done_crud.change_is_done(db, task, is_done=False)
