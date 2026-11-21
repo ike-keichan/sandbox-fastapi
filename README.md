@@ -2,7 +2,16 @@
 
 FastAPI による Web API の技術検証と、プロジェクトのひな形を兼ねたリポジトリ。
 
-タスクを管理する小さな Web API が、Docker Compose で動く状態で入っている。新しいプロジェクトを始めるときは、このリポジトリを複製して、タスクの部分を自分の題材に書き換えて使う。
+> このブランチ（`example/task-api`）は、タスクを管理する API を実装した見本である。最小の形のひな形は、[`main` ブランチ](https://github.com/ike-keichan/sandbox-fastapi)にある。
+
+タスクを管理する小さな Web API が、Docker Compose で動く状態で入っている。`main` のひな形に機能を足すときの、書き方の手本として使う。
+
+## ブランチ
+
+| ブランチ | 内容 |
+| --- | --- |
+| [`main`](https://github.com/ike-keichan/sandbox-fastapi) | 最小の形。API は `GET /hello` だけ |
+| `example/task-api` | タスクを管理する API を実装した見本（このブランチ） |
 
 ## 構成
 
@@ -131,7 +140,9 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
 
 ## ひな形として使う
 
-1. GitHub のこのリポジトリのページで「Use this template」を押し、新しいリポジトリを作る。
+新しいプロジェクトは、ふつうは `main` ブランチ（最小の形）から始める。このブランチの内容から始めたい場合は、次の手順で使う。
+
+1. GitHub のこのリポジトリのページで「Use this template」を押し、「Include all branches」にチェックを入れて、新しいリポジトリを作る。作ったリポジトリで、`example/task-api` ブランチを使う。
 2. 次の名前を、自分のプロジェクトの名前に変える。
 
    | 場所 | 変えるもの |
