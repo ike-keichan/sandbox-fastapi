@@ -1,6 +1,6 @@
 # sandbox-fastapi
 
-FastAPI による Web API の技術検証と、プロジェクトのひな形を兼ねたリポジトリ。
+FastAPI（MySQL、Docker Compose）の技術検証と、プロジェクトのひな形を兼ねたリポジトリ。
 
 FastAPI、MySQL、テスト、コードの検査が、Docker Compose で動く状態で入っている。API は、動作の確認用の `GET /hello` の1つだけである。新しいプロジェクトを始めるときは、このリポジトリを複製して、自分の機能を足して使う。
 
