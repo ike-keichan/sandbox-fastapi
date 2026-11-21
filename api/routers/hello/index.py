@@ -1,9 +1,11 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+import api.schemas.hello.index as hello_schema
+
+router = APIRouter(prefix="/hello", tags=["hello"])
 
 
 # サンプルのAPI
-@router.get("/hello", tags=["hello"])
-async def hello():
-    return {"message": "hello world!"}
+@router.get("", response_model=hello_schema.Hello)
+async def hello() -> hello_schema.Hello:
+    return hello_schema.Hello(message="hello world!")

@@ -5,12 +5,15 @@ services:
       - .dockervenv:/src/.venv
       - .:/src
     ports:
-      - 8000:8000
+      # 手元のパソコンからだけつなげるように、127.0.0.1 を付ける。
+      # 付けないと、同じネットワークのほかの機器からもつなげてしまう。
+      - 127.0.0.1:8000:8000
     environment:
       - WATCHFILES_FORCE_POLLING=true
       - DB_HOST=db
       - DB_NAME=demo
       - DB_USER=root
+      - DB_ECHO=true
     depends_on:
       db:
         condition: service_healthy
@@ -23,11 +26,14 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - 33306:3306
+      - 127.0.0.1:33306:3306
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      # -h 127.0.0.1 で、ネットワーク経由の接続を確かめる。
+      # localhost だと、初期化の途中の、まだ外からつなげない状態でも成功してしまう。
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 10s
 volumes:
   mysql_data:

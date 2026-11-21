@@ -125,7 +125,7 @@ $ git switch main
 | 対象 | 記録されている場所 |
 | --- | --- |
 | Python のパッケージ | `pyproject.toml`、`poetry.lock` |
-| Python のイメージ | `Dockerfile` |
+| Python のイメージ | `Dockerfile`（3.15.1 → 3.15.2 のような、小さな更新だけ） |
 | MySQL のイメージ | `docker-compose.yaml` |
 | GitHub Actions のアクション | `.github/workflows/` |
 
@@ -206,8 +206,7 @@ $ make py/test
 | 2 | コンテナを起動する | `docker compose up -d --wait` |
 | 3 | コードを検査する | `make py/check` |
 | 4 | テストを実行する | `make py/test` |
-| 5 | MySQL にテーブルを作る | `make db/migrate` |
-| 6 | 起動した API を呼ぶ | `curl http://localhost:8000/hello` |
+| 5 | 起動した API を、MySQL につないだ状態で呼ぶ | `bash scripts/smoke.sh` |
 
 動くのは、次のときです。
 

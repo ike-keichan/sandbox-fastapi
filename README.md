@@ -38,7 +38,7 @@ FastAPI で Web API を作るときの土台を、すぐ動く状態でまとめ
 | データベースの操作 | SQLAlchemy（非同期。ドライバは aiomysql） | 2.1 |
 | パッケージ管理 | Poetry | 2.5 |
 | コードの検査と整形 | Ruff | 0.17 |
-| テスト | pytest、pytest-asyncio、HTTPX | 9.2 |
+| テスト | pytest（非同期のテストに pytest-asyncio、API の呼び出しに HTTPX） | 9.2 |
 
 Python と MySQL は、Docker のコンテナの中で動きます。手元に必要なのは、Docker Desktop、make、Git だけです。
 
@@ -67,7 +67,8 @@ Python と MySQL は、Docker のコンテナの中で動きます。手元に�
 | `make py/test` | テストを実行します |
 | `make py/check` | コードを検査します |
 | `make py/fix` | 検査の指摘のうち、自動で直せるものを直します |
-| `make db/migrate` | テーブルを作り直します（データは消えます） |
+| `make db/migrate` | まだないテーブルを作ります（データは残ります） |
+| `make db/reset` | 全テーブルを削除して、作り直します（データは消えます） |
 
 ---
 

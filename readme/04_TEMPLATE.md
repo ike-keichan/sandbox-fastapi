@@ -72,12 +72,13 @@ $ make up
 | 順番 | 書くファイル | 書くこと |
 | --- | --- | --- |
 | 1 | `api/models/task/index.py` | テーブルの定義 |
-| 2 | `api/migrate_db.py` | 1 で作ったモデルを読み込む1行（ファイルの中に、書き方をコメントで示しています） |
+| 2 | `api/models/__init__.py` | 1 で作ったモデルを読み込む1行（ファイルの中に、書き方をコメントで示しています） |
 | 3 | `api/schemas/task/index.py` | リクエストとレスポンスの形 |
 | 4 | `api/cruds/task/index.py` | データベースの読み書き |
 | 5 | `api/routers/task/index.py` | パスと、リクエストの受け取り |
 | 6 | `api/main.py` | 5 で作ったルーターを登録する2行 |
-| 7 | `tests/` | テスト |
+| 7 | `tests/test_task.py` | テスト |
+| 8 | `scripts/smoke.sh` | 起動した API を呼んで確かめる行 |
 
 書き終えたら、テーブルを作って、確かめます。
 
@@ -90,7 +91,7 @@ $ make py/test
 
 <http://localhost:8000/docs> を開くと、足した API が一覧に出ます。
 
-新しいディレクトリを作るときは、Python がモジュールとして読み込めるように、ほかの機能と同じ構成（`<機能名>/index.py`）にしてください。
+新しいディレクトリを作るときは、ほかの機能と同じ構成にしてください。`<機能名>/index.py` と、空の `<機能名>/__init__.py` を置きます。
 
 ---
 
@@ -102,7 +103,8 @@ $ make py/test
 | --- | --- |
 | `hello` のルーター | `api/routers/hello/` |
 | `hello` の登録 | `api/main.py` の `hello` の2行 |
-| `hello` のテスト | `tests/test_main.py` の `test_hello` |
-| 自動テストの中の呼び出し | `.github/workflows/test.yml` の `curl ... /hello` の行（自分の API のパスに変える） |
+| `hello` のスキーマ | `api/schemas/hello/` |
+| `hello` のテスト | `tests/test_hello.py` |
+| 起動の確認の呼び出し | `scripts/smoke.sh` の `curl ... /hello` の行（自分の API のパスに変える） |
 
 `readme/` の文書も、自分のプロジェクトに合わせて書き換えてください。

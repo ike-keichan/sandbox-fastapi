@@ -1,26 +1,42 @@
-from sqlalchemy import create_engine
+import sys
+
+from sqlalchemy import MetaData, create_engine
 
 # テーブルを作るには、モデルを読み込んでおく必要がある。
-# モデルを追加したら、ここで読み込む。
-# 例: import api.models.task.index  # noqa: F401
-from api.db import Base, build_db_url
-
-# 接続するデータベースのURL。
-# DBはMySQL、ドライバにpymysqlを使用。
-DB_URL = build_db_url("pymysql")
+# モデルは api/models/__init__.py でまとめて読み込んでいる。
+import api.models  # noqa: F401
+from api.db import DB_ECHO, Base, build_db_url
 
 # DB接続用のエンジン
-engine = create_engine(DB_URL, echo=True)
+# DBはMySQL、ドライバにpymysqlを使用。この処理は1回実行して終わるので、同期のエンジンを使う。
+engine = create_engine(build_db_url("pymysql"), echo=DB_ECHO)
 
 
-def reset_database():
+def create_tables() -> None:
     """
-    DBをリセットする関数。
-    現在のDBの全テーブルを削除し、再度作成する。
+    まだ存在しないテーブルを作成する関数。
+    すでにあるテーブルとデータは、そのまま残る。
     """
-    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
+def reset_database() -> None:
+    """
+    DBをリセットする関数。
+    DBにある全テーブルを削除し、再度作成する。データは消える。
+    """
+    # DBにあるテーブルを調べてから削除する。
+    # こうすると、モデルを消したり名前を変えたりして残った、古いテーブルも消せる。
+    existing = MetaData()
+    existing.reflect(bind=engine)
+    existing.drop_all(bind=engine)
+    create_tables()
+
+
 if __name__ == "__main__":
-    reset_database()
+    if "--reset" in sys.argv[1:]:
+        reset_database()
+        print("Reset the database")
+    else:
+        create_tables()
+        print("Created the tables")
