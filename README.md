@@ -1,4 +1,4 @@
-# fastapi-sandbox
+# sandbox-fastapi
 
 http://localhost:8000/docs#/
 
