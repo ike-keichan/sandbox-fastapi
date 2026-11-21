@@ -34,7 +34,7 @@ FastAPI で Web API を作るときの土台を、すぐ動く状態でまとめ
 | 言語 | Python | 3.15 |
 | Web フレームワーク | FastAPI | 0.165 |
 | サーバー | Uvicorn | 0.54 |
-| データベース | MySQL | 8.4（長期サポート版） |
+| データベース | MySQL | 8.4（LTS） |
 | データベースの操作 | SQLAlchemy（非同期。ドライバは aiomysql） | 2.1 |
 | パッケージ管理 | Poetry | 2.5 |
 | コードの検査と整形 | Ruff | 0.17 |

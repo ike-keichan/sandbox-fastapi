@@ -173,7 +173,7 @@ make py/test
 ### バージョン
 
 - Python のバージョンは、`Dockerfile`、`pyproject.toml` の `requires-python`、`ruff.toml` の `target-version` の3か所に書いてある。変えるときは、3か所をそろえる。
-- MySQL は、長期サポート版を使う。短い周期で出る版には上げない。
+- MySQL は、LTS を使う。短い周期で出る版には上げない。
 - バージョンを変えたら、`README.md` の「Tool Versions」の表も直す。
 
 ### Makefile
