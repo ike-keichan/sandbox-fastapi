@@ -1,0 +1,30 @@
+name: Test
+
+on:
+  push:
+    branches: [main, example/**]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the containers and install the packages
+        run: make setup
+      - name: Start the containers
+        run: docker compose up -d --wait
+      - name: Check the code
+        run: make py/check
+      - name: Run the tests
+        run: make py/test
+      - name: Create the tables in the real database
+        run: make db/migrate
+      - name: Call the API
+        run: |
+          curl --fail --silent --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/hello
+      - name: Show the logs when something failed
+        if: failure()
+        run: docker compose logs

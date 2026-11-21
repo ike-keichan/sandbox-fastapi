@@ -1,3 +1,5 @@
+.PHONY: up upd stop restart build down downv ps db/migrate db/reset py/install py/add py/add-d py/fix py/fix-lint py/fix-format py/check py/check-lint py/check-format py/update py/test python/login python/repl db/login db/repl setup
+
 ## コンテナ操作系
 # コンテナの起動
 up:
@@ -25,53 +27,57 @@ ps:
 	docker compose ps -a
 
 
-# TODO:DB関連のコマンドを整理する。シードの追加処理の追加。
 ## DB操作系
-# DBのマイグレーション
+# DBのマイグレーション（全テーブルを削除して、作り直す）
 db/migrate:
-	docker compose exec fastapi-sandbox poetry run python -m api.migrate_db
-# DBのリセット
-db/reset:
-	echo "TODO"
+	docker compose exec api poetry run python -m api.migrate_db
+# DBのリセット（マイグレーションと同じ）
+db/reset: db/migrate
 
 
 ## Poetry操作系
 # パッケージインストール
 py/install:
-	docker compose run --rm --entrypoint "poetry install --no-root" fastapi-sandbox
+	docker compose run --rm --entrypoint "poetry install --no-root" api
 # パッケージ追加
 py/add:
-	docker compose exec fastapi-sandbox poetry add $(TARGET)
+	docker compose exec api poetry add $(TARGET)
 	docker compose build --no-cache
 # パッケージ追加（devDependency）
 py/add-d:
-	docker compose exec fastapi-sandbox poetry add -G dev $(TARGET)
+	docker compose exec api poetry add -G dev $(TARGET)
 	docker compose build --no-cache
 # コード修正
 py/fix: py/fix-lint py/fix-format
 # コード修正（リンター）
 py/fix-lint:
-	docker compose exec fastapi-sandbox poetry run ruff check --fix
+	docker compose exec api poetry run ruff check --fix
 # コード修正（フォーマッタ）
 py/fix-format:
-	docker compose exec fastapi-sandbox poetry run ruff format
+	docker compose exec api poetry run ruff format
 # コードチェック
-py/check: py/check-lint
+py/check: py/check-lint py/check-format
 # コードチェック（リンター）
 py/check-lint:
-	docker compose exec fastapi-sandbox poetry run ruff check
+	docker compose exec api poetry run ruff check
+# コードチェック（フォーマッタ）
+py/check-format:
+	docker compose exec api poetry run ruff format --check
+# パッケージ更新（pyproject.toml の範囲内で最新にする）
+py/update:
+	docker compose exec api poetry update
 # テスト
 py/test:
-	docker compose exec fastapi-sandbox poetry run pytest
+	docker compose exec api poetry run pytest
 
 
 ## コンソール系
 # pythonコンテナのシェル
 python/login:
-	docker compose exec fastapi-sandbox bash
+	docker compose exec api bash
 # pythonコンテナのpythonのrepl
 python/repl:
-	docker compose exec fastapi-sandbox python
+	docker compose exec api python
 # dbコンテナのシェル
 db/login:
 	docker compose exec db bash
@@ -84,7 +90,7 @@ db/repl:
 # セットアップ
 setup:
 	docker compose build
-	docker compose up -d --force-recreate
-	@sleep 8
-	docker compose exec fastapi-sandbox poetry run python -m api.migrate_db
+	docker compose run --rm --no-deps --entrypoint "poetry install --no-root" api
+	docker compose up -d --force-recreate --wait
+	docker compose exec api poetry run python -m api.migrate_db
 	docker compose stop
