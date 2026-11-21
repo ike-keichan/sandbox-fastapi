@@ -20,12 +20,11 @@ jobs:
         run: make py/check
       - name: Run the tests
         run: make py/test
-      - name: Call the API through the real database
+      - name: Create the tables in the real database
+        run: make db/migrate
+      - name: Call the API
         run: |
           curl --fail --silent --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/hello
-          curl --fail --silent -X POST http://localhost:8000/tasks \
-            -H 'content-type: application/json' -d '{"title": "ci", "due_date": "2026-01-01"}'
-          curl --fail --silent http://localhost:8000/tasks
       - name: Show the logs when something failed
         if: failure()
         run: docker compose logs

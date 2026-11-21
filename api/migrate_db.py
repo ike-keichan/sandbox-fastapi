@@ -1,7 +1,9 @@
 from sqlalchemy import create_engine
 
-from api.db import build_db_url
-from api.models.task.index import Base
+# テーブルを作るには、モデルを読み込んでおく必要がある。
+# モデルを追加したら、ここで読み込む。
+# 例: import api.models.task.index  # noqa: F401
+from api.db import Base, build_db_url
 
 # 接続するデータベースのURL。
 # DBはMySQL、ドライバにpymysqlを使用。

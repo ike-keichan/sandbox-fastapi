@@ -2,7 +2,14 @@
 
 FastAPI による Web API の技術検証と、プロジェクトのひな形を兼ねたリポジトリ。
 
-タスクを管理する小さな Web API が、Docker Compose で動く状態で入っている。新しいプロジェクトを始めるときは、このリポジトリを複製して、タスクの部分を自分の題材に書き換えて使う。
+FastAPI、MySQL、テスト、コードの検査が、Docker Compose で動く状態で入っている。API は、動作の確認用の `GET /hello` の1つだけである。新しいプロジェクトを始めるときは、このリポジトリを複製して、自分の機能を足して使う。
+
+## ブランチ
+
+| ブランチ | 内容 |
+| --- | --- |
+| `main` | 最小の形。API は `GET /hello` だけ |
+| [`example/task-api`](https://github.com/ike-keichan/sandbox-fastapi/tree/example/task-api) | タスクを管理する API を実装した見本。機能の足し方の手本にする |
 
 ## 構成
 
@@ -48,8 +55,6 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
 
 4. Web ブラウザで <http://localhost:8000/docs> を開く。API の一覧（Swagger UI）が表示され、その場で API を試せる。
 
-   ![Swagger UI の表示](./docs/img/swagger-ui.png)
-
 5. 終了するには、ターミナルで Ctrl + C を押す。
 
 ## API
@@ -57,12 +62,6 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
 | メソッドとパス | 内容 |
 | --- | --- |
 | `GET /hello` | `hello world!` というメッセージを返す |
-| `GET /tasks` | タスクの一覧を返す。`?is_done=true` のように付けると、完了か未完了かで絞り込む |
-| `POST /tasks` | タスクを作る。`title` と `due_date` を渡す |
-| `GET /tasks/{task_id}` | タスクを1件返す |
-| `PUT /tasks/{task_id}` | タスクの `title` と `due_date` を更新する |
-| `DELETE /tasks/{task_id}` | タスクを削除する |
-| `PUT /tasks/{task_id}/done` | タスクの完了と未完了を切り替える |
 
 ## コマンド
 
@@ -116,9 +115,9 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
 | --- | --- |
 | `api/main.py` | 入口。ルーターを登録する |
 | `api/routers/` | API のパスと、リクエストの受け取り |
-| `api/schemas/` | リクエストとレスポンスの形（Pydantic のモデル） |
-| `api/cruds/` | データベースの読み書き |
-| `api/models/` | テーブルの定義（SQLAlchemy のモデル） |
+| `api/schemas/` | リクエストとレスポンスの形（Pydantic のモデル）を置く場所。`main` では空 |
+| `api/cruds/` | データベースの読み書きを置く場所。`main` では空 |
+| `api/models/` | テーブルの定義（SQLAlchemy のモデル）を置く場所。`main` では空 |
 | `api/db.py` | データベースへの接続 |
 | `api/migrate_db.py` | テーブルを作り直すスクリプト |
 | `tests/` | テスト |
@@ -127,7 +126,7 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
 | `ruff.toml` | Ruff の設定 |
 | `.github/` | 自動テストと、Dependabot の設定 |
 
-`routers/`、`schemas/`、`cruds/`、`models/` は、どれも機能ごとのディレクトリ（`task/`、`hello/`）に分けている。
+`routers/`、`schemas/`、`cruds/`、`models/` は、どれも機能ごとのディレクトリ（`hello/` など）に分けて使う。
 
 ## ひな形として使う
 
@@ -142,8 +141,8 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
    | `README.md` | 題名と説明 |
 
 3. `make setup` と `make up` で、動くことを確かめる。
-4. 機能を足す。`task` の4つのファイル（`routers/task/`、`schemas/task/`、`cruds/task/`、`models/task/`）を手本にして、同じ形で自分の機能のディレクトリを作る。作ったルーターは、`api/main.py` に登録する。モデルを足したら、`api/migrate_db.py` で読み込んで、`make db/migrate` を実行する。
-5. 不要になったら、`task` と `hello` を消す。
+4. 機能を足す。`routers/`、`schemas/`、`cruds/`、`models/` のそれぞれに、機能の名前のディレクトリを作る。書き方は、`example/task-api` ブランチの `task` を手本にする。作ったルーターは、`api/main.py` に登録する。モデルを足したら、`api/migrate_db.py` で読み込んで、`make db/migrate` を実行する。
+5. 不要になったら、`hello` を消す。
 
 ## 設定
 
@@ -165,5 +164,5 @@ Python と MySQL は、コンテナの中で動く。手元にインストール
 
 ## 自動テストと更新
 
-- プルリクエストを作ったときと、`main` に push したときに、GitHub Actions がコードの検査とテストを実行する。コンテナを起動して、実際の MySQL につないだ状態で API を呼ぶ確認も行う。
+- プルリクエストを作ったときと、`main` に push したときに、GitHub Actions がコードの検査とテストを実行する。コンテナを起動して、テーブルの作成と、API の呼び出しができることも確かめる。
 - 毎週月曜に、Dependabot が、Python のパッケージ、Docker のイメージ、GitHub Actions のアクションの更新を、プルリクエストで知らせる。
