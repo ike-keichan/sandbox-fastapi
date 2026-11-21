@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the containers and install the packages
+        run: make setup
+      - name: Start the containers
+        run: docker compose up -d --wait
+      - name: Check the code
+        run: make py/check
+      - name: Run the tests
+        run: make py/test
+      - name: Call the API through the real database
+        run: |
+          curl --fail --silent --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/hello
+          curl --fail --silent -X POST http://localhost:8000/tasks \
+            -H 'content-type: application/json' -d '{"title": "ci", "due_date": "2026-01-01"}'
+          curl --fail --silent http://localhost:8000/tasks
+      - name: Show the logs when something failed
+        if: failure()
+        run: docker compose logs
