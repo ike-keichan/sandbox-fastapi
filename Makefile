@@ -51,29 +51,32 @@ py/add-d:
 py/fix: py/fix-lint py/fix-format
 # コード修正（リンター）
 py/fix-lint:
-	docker compose run --rm --entrypoint "poetry run ruff check --fix" fastapi-sandbox
+	docker compose exec fastapi-sandbox poetry run ruff check --fix
 # コード修正（フォーマッタ）
 py/fix-format:
-	docker compose run --rm --entrypoint "poetry run ruff format" fastapi-sandbox
+	docker compose exec fastapi-sandbox poetry run ruff format
 # コードチェック
 py/check: py/check-lint
 # コードチェック（リンター）
 py/check-lint:
-	docker compose run --rm --entrypoint "poetry run ruff check" fastapi-sandbox
+	docker compose exec fastapi-sandbox poetry run ruff check
 # テスト
 py/test:
-	docker compose run --rm --entrypoint "poetry run pytest" fastapi-sandbox
+	docker compose exec fastapi-sandbox poetry run pytest
 
 
 ## コンソール系
-# pythonコンテナ
-c:
+# pythonコンテナのシェル
+python/login:
 	docker compose exec fastapi-sandbox bash
-# pythonコンテナのpython
-pyc:
+# pythonコンテナのpythonのrepl
+python/repl:
 	docker compose exec fastapi-sandbox python
-# DBコンテナのmysql
-dbc:
+# dbコンテナのシェル
+db/login:
+	docker compose exec db bash
+# dbコンテナのmysqlのrepl
+db/repl:
 	docker compose exec db mysql demo
 
 

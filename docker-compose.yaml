@@ -9,7 +9,8 @@ services:
     environment:
       - WATCHFILES_FORCE_POLLING=true
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   db:
     image: mysql:8.0
     platform: linux/x86_64

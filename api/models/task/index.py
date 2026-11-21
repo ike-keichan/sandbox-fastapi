@@ -2,7 +2,6 @@ from sqlalchemy import Boolean, Column, Date, Integer, String
 
 from api.db import Base
 
-
 class Task(Base):
     __tablename__ = "tasks"
 

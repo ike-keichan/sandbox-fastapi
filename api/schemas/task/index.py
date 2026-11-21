@@ -1,7 +1,7 @@
 import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Task(BaseModel):
@@ -10,8 +10,9 @@ class Task(BaseModel):
     due_date: Optional[datetime.date] = Field(None, example="2024-09-01", description="期日")
     is_done: bool = Field(False, description="完了状態の真偽値")
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 class TaskOfOnlyTitle(BaseModel):
