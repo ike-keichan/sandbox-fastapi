@@ -1,29 +1,32 @@
-import pytest_asyncio
-import starlette.status
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from collections.abc import AsyncIterator
 
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+import api.models  # noqa: F401
 from api.db import Base, get_db
 from api.main import app
 
-# 接続するデータベースのURL。
-# DBはSQLite、ドライバにaiosqliteを使用。
+# テストで接続するデータベースのURL。
+# DBはメモリ上のSQLite、ドライバにaiosqliteを使用。
 ASYNC_DB_URL = "sqlite+aiosqlite:///:memory:"
 
 
 @pytest_asyncio.fixture
-async def async_client() -> AsyncClient:
+async def async_client() -> AsyncIterator[AsyncClient]:
+    """
+    テスト用のHTTPクライアントを応答するフィクスチャ。
+    テストごとに、空のDBから始まる。
+    """
     # DB接続用の非同期エンジン
-    async_engine = create_async_engine(ASYNC_DB_URL, echo=True)
+    async_engine = create_async_engine(ASYNC_DB_URL)
 
     # 非同期セッション
-    async_session = async_sessionmaker(
-        autocommit=False, autoflush=False, bind=async_engine, class_=AsyncSession
-    )
+    async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 
-    # テスト用にDBをリセット
+    # テスト用のDBに、テーブルを作成
     async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     # テスト用に非同期にデータベースセッションを応答
@@ -41,9 +44,3 @@ async def async_client() -> AsyncClient:
     # テスト用の設定を元に戻す
     app.dependency_overrides.clear()
     await async_engine.dispose()
-
-
-async def test_hello(async_client):
-    response = await async_client.get("/hello")
-    assert response.status_code == starlette.status.HTTP_200_OK
-    assert response.json() == {"message": "hello world!"}

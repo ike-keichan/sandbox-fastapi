@@ -4,14 +4,11 @@ target-version = "py315"
 # 行数
 line-length = 100
 
+# 対象から除外するファイル・ディレクトリ（既定の除外に追加する）
+extend-exclude = [".dockervenv"]
+
 
 [lint]
 # 適用するルール（セット）のリスト。
-select = ["E", "F", "W", "C", "N", "B", "I"]
-
-# 除外するルールのリスト
-ignore = ["B008", "E501"]
-
-# 対象から除外するファイル・ディレクトリ
-exclude = [".git", "__pycache__", "build", "dist", ".venv"]
-
+# E, W: 書式  F: 誤り  C: 複雑さ  N: 名前  B: バグになりやすい書き方  I: importの並び  UP: 古い書き方
+select = ["E", "F", "W", "C", "N", "B", "I", "UP"]
