@@ -1,6 +1,6 @@
 # sandbox-fastapi
 
-FastAPI による Web API の技術検証と、プロジェクトのひな形を兼ねたリポジトリ。
+FastAPI（MySQL、Docker Compose）の技術検証と、プロジェクトのひな形を兼ねたリポジトリ。
 
 > このブランチ（`example/task-api`）は、タスクを管理する API を実装した見本である。最小の形のひな形は、[`main` ブランチ](https://github.com/ike-keichan/sandbox-fastapi)にある。
 
