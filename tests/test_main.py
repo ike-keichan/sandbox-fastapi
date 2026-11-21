@@ -1,18 +1,18 @@
 import pytest
 import pytest_asyncio
 import starlette.status
-from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from api.db import Base, get_db
 from api.main import app
 
 # 接続するデータベースのURL。
-# DBはSQLite、ORMにaiomysqlを使用。
+# DBはSQLite、ドライバにaiosqliteを使用。
 ASYNC_DB_URL = "sqlite+aiosqlite:///:memory:"
 
 # TODO: 仮で記入、ふぁいる分割したい。
+
 
 @pytest_asyncio.fixture
 async def async_client() -> AsyncClient:
@@ -20,7 +20,7 @@ async def async_client() -> AsyncClient:
     async_engine = create_async_engine(ASYNC_DB_URL, echo=True)
 
     # 非同期セッション
-    async_session = sessionmaker(
+    async_session = async_sessionmaker(
         autocommit=False, autoflush=False, bind=async_engine, class_=AsyncSession
     )
 
@@ -38,8 +38,12 @@ async def async_client() -> AsyncClient:
     app.dependency_overrides[get_db] = get_test_db
 
     # テスト用に非同期HTTPクライアントを応答
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         yield client
+
+    # テスト用の設定を元に戻す
+    app.dependency_overrides.clear()
+    await async_engine.dispose()
 
 
 @pytest.mark.asyncio
@@ -78,14 +82,15 @@ async def test_done_flag(async_client):
     assert response_obj["title"] == "テストタスク2"
     assert response_obj["is_done"] is False
 
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "input_param, expectation",
     [
         ("2024-12-01", starlette.status.HTTP_200_OK),
-        ("2024-12-32", starlette.status.HTTP_422_UNPROCESSABLE_ENTITY),
-        ("2024/12/01", starlette.status.HTTP_422_UNPROCESSABLE_ENTITY),
-        ("2024-1201", starlette.status.HTTP_422_UNPROCESSABLE_ENTITY),
+        ("2024-12-32", starlette.status.HTTP_422_UNPROCESSABLE_CONTENT),
+        ("2024/12/01", starlette.status.HTTP_422_UNPROCESSABLE_CONTENT),
+        ("2024-1201", starlette.status.HTTP_422_UNPROCESSABLE_CONTENT),
     ],
 )
 async def test_due_date(input_param, expectation, async_client):
@@ -93,3 +98,33 @@ async def test_due_date(input_param, expectation, async_client):
         "/tasks", json={"title": "テストタスク", "due_date": input_param}
     )
     assert response.status_code == expectation
+
+
+@pytest.mark.asyncio
+async def test_update_and_delete(async_client):
+    response = await async_client.post("/tasks", json={"title": "テストタスク3"})
+    assert response.status_code == starlette.status.HTTP_200_OK
+
+    # タスク名と期日を更新する
+    response = await async_client.put(
+        "/tasks/1", json={"title": "更新したタスク", "due_date": "2024-12-01"}
+    )
+    assert response.status_code == starlette.status.HTTP_200_OK
+    response_obj = response.json()
+    assert response_obj["title"] == "更新したタスク"
+    assert response_obj["due_date"] == "2024-12-01"
+
+    # タスクを削除する
+    response = await async_client.delete("/tasks/1")
+    assert response.status_code == starlette.status.HTTP_200_OK
+
+    # 削除したタスクは取得できない
+    response = await async_client.get("/tasks/1")
+    assert response.status_code == starlette.status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_hello(async_client):
+    response = await async_client.get("/hello")
+    assert response.status_code == starlette.status.HTTP_200_OK
+    assert response.json() == {"message": "hello world!"}

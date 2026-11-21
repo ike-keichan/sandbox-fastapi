@@ -1,10 +1,11 @@
 from sqlalchemy import create_engine
 
+from api.db import build_db_url
 from api.models.task.index import Base
 
 # 接続するデータベースのURL。
-# DBはMySQL、ORMにpymysqlを使用。DB名は'demo'。
-DB_URL = "mysql+pymysql://root@db:3306/demo?charset=utf8"
+# DBはMySQL、ドライバにpymysqlを使用。
+DB_URL = build_db_url("pymysql")
 
 # DB接続用のエンジン
 engine = create_engine(DB_URL, echo=True)

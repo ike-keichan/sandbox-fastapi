@@ -1,5 +1,5 @@
 # Pythonのバージョン
-target-version = "py312"
+target-version = "py315"
 
 # 行数
 line-length = 100

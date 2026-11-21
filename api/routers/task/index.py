@@ -1,7 +1,4 @@
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import api.cruds.task.index as task_crud
@@ -13,14 +10,14 @@ router = APIRouter()
 
 
 # タスク一覧の取得
-@router.get("/tasks", tags=["task"], response_model=List[task_schema.Task])
-async def list_tasks(is_done: Optional[bool] = None, db: AsyncSession = Depends(get_db)):
+@router.get("/tasks", tags=["task"], response_model=list[task_schema.Task])
+async def list_tasks(is_done: bool | None = None, db: AsyncSession = Depends(get_db)):
     return await task_crud.get_tasks(db, is_done)
 
 
 # タスクの新規作成
 @router.post("/tasks", tags=["task"], response_model=task_schema.Task)
-async def create_task(task_body: task_schema.TaskOfOnlyTitle, db: AsyncSession = Depends(get_db)):
+async def create_task(task_body: task_schema.TaskInput, db: AsyncSession = Depends(get_db)):
     return await task_crud.create_task(db, new_task=task_body)
 
 
@@ -38,7 +35,7 @@ async def get_task(task_id: int, db: AsyncSession = Depends(get_db)):
 @router.put("/tasks/{task_id}", tags=["task"], response_model=task_schema.Task)
 async def update_task(
     task_id: int,
-    task_body: task_schema.TaskOfOnlyTitle,
+    task_body: task_schema.TaskInput,
     db: AsyncSession = Depends(get_db),
 ):
     task = await task_crud.get_task(db, task_id)
