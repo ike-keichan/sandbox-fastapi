@@ -53,8 +53,11 @@ make py/test
 | 変えたもの | 確かめること |
 | --- | --- |
 | `Dockerfile`、`docker-compose.yaml`、`pyproject.toml`、`Makefile` | `make downv` のあとに `make setup` と `make upd` が通り、`curl http://localhost:8000/hello` が応答する |
-| モデル（`api/models/`） | `make db/migrate` が通り、実際の MySQL につないだ状態で API が動く |
+| モデル（`api/models/`） | `make db/reset` が通り、実際の MySQL につないだ状態で API が動く（`bash scripts/smoke.sh`） |
+| API の追加や変更 | `scripts/smoke.sh` に、その API を呼ぶ行を足して、`bash scripts/smoke.sh` が通る |
 | `.github/workflows/` | プルリクエストを作って、GitHub Actions が緑になる |
+
+テストは、データベースを SQLite で代用している。SQLite は、文字列の長さの上限などを検査しないので、テストが通っても、MySQL ではエラーになることがある。データベースに関わる変更は、必ず実際の MySQL でも確かめる。
 
 確かめられなかったことは、確かめられなかったと伝える。
 
@@ -70,7 +73,7 @@ make py/test
 
 - **routers**：パス、メソッド、リクエストの受け取り、レスポンスの返却だけを書く。データベースを直接さわらず、cruds の関数を呼ぶ。「見つからなければ 404」のような、HTTP に関わる判断は、ここに書く。
 - **schemas**：Pydantic のモデル。リクエスト用とレスポンス用を分ける。リクエスト用には、利用者が決められる項目だけを入れる。
-- **cruds**：データベースの読み書き。`HTTPException` を投げない。見つからないときは、`None` を返す。
+- **cruds**：データベースの読み書き。`HTTPException` を投げない。見つからないときは、`None` を返す。コミットのあとに、`refresh` を呼ぶ必要はない（セッションを、`expire_on_commit=False` で作っているため）。すでにセッションにあるオブジェクトを、`db.add` し直す必要もない。
 - **models**：SQLAlchemy のモデル。`api.db.Base` を継承する。
 
 依存の向きは、routers → cruds → models の一方向にする。cruds から routers を読み込まない。
@@ -87,13 +90,14 @@ make py/test
   import api.schemas.task.index as task_schema
   ```
 
-- ルーターを足したら、`api/main.py` に登録する。モデルを足したら、`api/migrate_db.py` で読み込む（読み込まないと、テーブルが作られない）。
+- 機能のディレクトリには、空の `__init__.py` を置く。
+- ルーターを足したら、`api/main.py` に登録する。モデルを足したら、`api/models/__init__.py` で読み込む（読み込まないと、テーブルが作られない）。このとき、別名を付けない（`import api.models.task.index  # noqa: F401`）。`from api.models.task import index as task` と書くと、`api.models.task` という名前を上書きしてしまい、ほかの場所から読み込めなくなる。
 
 ### 書式と型
 
 - 書式と規則は、Ruff に従う（`ruff.toml`）。1行は100文字まで。手で整えず、`make py/fix` を使う。
 - 規則を無効にする場合（`# noqa`）は、理由が分かるコメントを添える。`ruff.toml` の `ignore` を増やすのは、最後の手段にする。
-- 関数の引数と戻り値に、型を書く。
+- 関数の引数と戻り値に、型を書く。ルーターの関数と、テストの関数にも書く。
 - 型は、新しい書き方を使う（`str | None`、`list[Task]`）。`Optional`、`List` は使わない。
 - データベースの処理は、非同期で書く（`async def`、`await`、`AsyncSession`）。同期のエンジンを使うのは、`api/migrate_db.py` だけである。
 
@@ -108,7 +112,7 @@ make py/test
       タスクの取得
 
       Args:
-          db (Session): SQLAlchemyのデータベースセッションオブジェクト。
+          db (AsyncSession): SQLAlchemyのデータベースセッションオブジェクト。
           task_id (int): 取得したいタスクのID。
 
       Returns:
@@ -117,7 +121,11 @@ make py/test
   ```
 
 - routers の関数には、docstring の代わりに、直前に1行のコメントを書く（例：`# タスク一覧の取得`）。
-- ルーターには、`tags` と `response_model` を付ける。Swagger UI の表示が、これで決まる。
+- ルーターには、`tags` と `response_model` を付ける。Swagger UI の表示が、これで決まる。`tags` と、パスの共通の部分は、`APIRouter(prefix="/tasks", tags=["task"])` でまとめて付ける。
+- 状態コードは、内容に合わせる。作成は 201（`status_code=status.HTTP_201_CREATED`）、本文を返さない削除は 204、見つからないときは 404、値が不正なときは 422 にする。
+- データベースのセッションは、`api.db.DbSession` を引数の型に書いて受け取る（`db: DbSession`）。`db: AsyncSession = Depends(get_db)` とは書かない。
+- 複数のルーターで同じ前処理をするときは、依存関係（`Depends`）にまとめる。たとえば、「パスの ID から1件を取得して、なければ 404」は、関数にして、`Annotated[..., Depends(...)]` の型として使う。
+- 同じ操作を何度呼んでも、結果が同じになるようにする（PUT と DELETE）。「呼ぶたびに切り替わる」操作は、作らない。再送されたときに、結果が逆になる。
 - コードを読めば分かることは、コメントにしない。なぜそうしているかを書く。
 
 ### 新しい版の書き方を使う
@@ -132,7 +140,12 @@ make py/test
 | Pydantic：項目の例 | `Field(examples=["..."])` | `Field(example="...")` |
 | SQLAlchemy：非同期のセッション | `async_sessionmaker` | `sessionmaker(class_=AsyncSession)` |
 | SQLAlchemy：基底クラス | `class Base(DeclarativeBase)` | `declarative_base()` |
-| SQLAlchemy：1件を取り出す | `result.scalars().first()` | `result.first()[0]` |
+| SQLAlchemy：主キーで1件を取り出す | `await db.get(Task, task_id)` | `select(...)` と `result.first()[0]` |
+| SQLAlchemy：複数件を取り出す | `await db.scalars(statement)` | `(await db.execute(statement)).all()` |
+| SQLAlchemy：絞り込み | `select(Task).where(...)` | `select(Task).filter(...)` |
+| SQLAlchemy：モデルの列 | `id: Mapped[int] = mapped_column(primary_key=True)` | `id = Column(Integer, primary_key=True)` |
+| SQLAlchemy：接続先の URL | `URL.create(...)` | 文字列の連結（記号入りのパスワードで壊れる） |
+| FastAPI：依存関係 | `Annotated[AsyncSession, Depends(get_db)]` | `db: AsyncSession = Depends(get_db)` |
 | HTTPX：テスト用のクライアント | `AsyncClient(transport=ASGITransport(app=app))` | `AsyncClient(app=app)` |
 | Starlette：状態コード 422 | `HTTP_422_UNPROCESSABLE_CONTENT` | `HTTP_422_UNPROCESSABLE_ENTITY` |
 
@@ -140,9 +153,10 @@ make py/test
 
 ## テストの書き方
 
-- テストは、API を呼ぶ形で書く。cruds の関数を直接呼ばず、`async_client` でリクエストを送って、状態コードとレスポンスの中身を確かめる。
-- API を足したら、成功する場合と、失敗する場合（見つからない、値が不正）の両方のテストを書く。
-- テストは、メモリ上の SQLite で動く。テストごとに空の状態から始まるので、ほかのテストが作ったデータに頼らない。
+- テストは、機能ごとに `tests/test_<機能名>.py` に書く。どのテストでも使う準備は、`tests/conftest.py` に置く。
+- テストは、API を呼ぶ形で書く。cruds の関数を直接呼ばず、`async_client` でリクエストを送って、状態コードとレスポンスの中身を確かめる。状態コードだけでなく、本文も確かめる。
+- API を足したら、成功する場合と、失敗する場合（見つからない、値が不正）の両方のテストを書く。値の検査は、境目（上限ちょうどと、上限を1つ超えた値）を確かめる。失敗する場合は、データが変わっていないことも確かめる。
+- テストは、メモリ上の SQLite で動く。テストごとに空の状態から始まるので、ほかのテストが作ったデータに頼らない。必要なデータは、そのテストの中で作る。
 - 状態コードは、数値ではなく、`starlette.status` の定数で書く。
 - 入力だけが違うテストは、`@pytest.mark.parametrize` でまとめる。
 - 非同期のテストに、`@pytest.mark.asyncio` を付ける必要はない（`pyproject.toml` で、自動にしている）。
@@ -171,6 +185,8 @@ make py/test
 ### データベース
 
 - 接続先は、環境変数（`DB_HOST` など）から読み込む。コードに、接続先やパスワードを直接書かない。
+- 文字列の長さの上限のように、データベースが決めている制限は、リクエストの検査（schemas）にも同じ値を書く。書かないと、データベースのエラーが、そのまま 500 になる。同じ値を2か所に書かずに済むように、モデルの側に定数を置いて、schemas から読み込む。
+- `make db/migrate` は、まだないテーブルを作るだけで、データは消さない。`make db/reset` は、全テーブルを消して作り直す。
 - パスワードや鍵を、リポジトリに入れない。必要になったら、`.env` を使い、`.gitignore` に入っていることを確かめる。
 
 ## 文書の書き方

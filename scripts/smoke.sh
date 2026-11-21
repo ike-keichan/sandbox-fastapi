@@ -26,14 +26,20 @@ echo
 
 # タスクのAPI
 JSON='content-type: application/json'
-expect_status 201 -X POST "${BASE_URL}/tasks" -H "${JSON}" -d '{"title": "日本語のタスク", "due_date": "2024-09-01"}'
+
+# タスクを1件作って、振られたIDを取り出す。
+CREATED="$(curl --fail --silent --show-error -X POST "${BASE_URL}/tasks" -H "${JSON}" -d '{"title": "日本語のタスク", "due_date": "2024-09-01"}')"
+echo "${CREATED}"
+TASK_ID="$(echo "${CREATED}" | sed -E 's/.*"id":([0-9]+).*/\1/')"
+
 expect_status 200 "${BASE_URL}/tasks"
 expect_status 200 "${BASE_URL}/tasks?is_done=false"
-expect_status 200 -X PUT "${BASE_URL}/tasks/1" -H "${JSON}" -d '{"title": "更新したタスク"}'
-expect_status 200 -X PUT "${BASE_URL}/tasks/1/done"
-expect_status 200 -X DELETE "${BASE_URL}/tasks/1/done"
-expect_status 204 -X DELETE "${BASE_URL}/tasks/1"
-expect_status 404 "${BASE_URL}/tasks/1"
+expect_status 200 "${BASE_URL}/tasks/${TASK_ID}"
+expect_status 200 -X PUT "${BASE_URL}/tasks/${TASK_ID}" -H "${JSON}" -d '{"title": "更新したタスク"}'
+expect_status 200 -X PUT "${BASE_URL}/tasks/${TASK_ID}/done"
+expect_status 200 -X DELETE "${BASE_URL}/tasks/${TASK_ID}/done"
+expect_status 204 -X DELETE "${BASE_URL}/tasks/${TASK_ID}"
+expect_status 404 "${BASE_URL}/tasks/${TASK_ID}"
 
 # タスク名が長すぎるときは、DBのエラー（500）ではなく、入力の誤り（422）になる。
 LONG_TITLE="$(printf 'a%.0s' $(seq 1 1025))"

@@ -118,7 +118,7 @@ $ make setup
 | --- | --- | --- |
 | 1 | コンテナのビルド | Python のイメージをダウンロードして、API 用のコンテナを作ります |
 | 2 | Python のパッケージのインストール | FastAPI などを、`.dockervenv` フォルダの中に入れます |
-| 3 | コンテナの起動と、テーブルの作成 | MySQL のイメージをダウンロードして起動し、データベースにテーブルを作ります |
+| 3 | コンテナの起動と、テーブルの作成 | MySQL のイメージをダウンロードして起動し、データベースにテーブルを作ります（`main` ブランチには、まだテーブルがありません） |
 | 4 | コンテナの停止 | 作り終えたら、いったん止めます |
 
 初回は、イメージのダウンロードがあるので、数分かかります。途中で止まっているように見えても、そのまま待ってください。
@@ -126,6 +126,7 @@ $ make setup
 最後が次のような表示になれば、成功です。
 
 ```zsh
+Created the tables
 docker compose stop
  Container sandbox-fastapi-api-1 Stopping
  Container sandbox-fastapi-api-1 Stopped
@@ -133,7 +134,9 @@ docker compose stop
  Container sandbox-fastapi-db-1 Stopped
 ```
 
-途中に `INFO sqlalchemy.engine.Engine ...` という行がたくさん出ますが、これはテーブルを作るときの記録で、エラーではありません。
+`Created the tables` が、データベースの準備ができた合図です。
+
+途中に `INFO sqlalchemy.engine.Engine ...` という行が出ますが、これはデータベースへの問い合わせの記録で、エラーではありません。
 
 `Error` や `failed` という言葉が出て止まった場合は、「[9. うまくいかないとき](#9-うまくいかないとき)」を見てください。
 
@@ -180,8 +183,8 @@ $ make upd
 ```zsh
 $ make ps
 NAME                    IMAGE                 SERVICE   STATUS                    PORTS
-sandbox-fastapi-api-1   sandbox-fastapi-api   api       Up 5 seconds              0.0.0.0:8000->8000/tcp
-sandbox-fastapi-db-1    mysql:8.4             db        Up 10 seconds (healthy)   0.0.0.0:33306->3306/tcp
+sandbox-fastapi-api-1   sandbox-fastapi-api   api       Up 4 seconds             127.0.0.1:8000->8000/tcp
+sandbox-fastapi-db-1    mysql:8.4             db        Up 9 seconds (healthy)   127.0.0.1:33306->3306/tcp
 ```
 
 `api` と `db` の2行があり、どちらの `STATUS` も `Up` で始まっていれば、正常です（表示は、見やすいように一部を省いています）。
@@ -211,13 +214,13 @@ $ curl http://localhost:8000/hello
 
 ```zsh
 $ make py/test
-============================== 1 passed in 0.43s ===============================
+============================== 2 passed in 0.04s ===============================
 
 $ make py/check
 docker compose exec api poetry run ruff check
 All checks passed!
 docker compose exec api poetry run ruff format --check
-13 files already formatted
+22 files already formatted
 ```
 
 `passed` と `All checks passed!` が出れば、正常です。
@@ -289,7 +292,7 @@ Docker Desktop が起動していません。Docker Desktop を起動して、�
 
 ### `make setup` の途中で止まった
 
-ダウンロードの途中で、通信が切れた可能性があります。もう一度 `make setup` を実行してください。途中まで終わった分は、やり直されません。
+ダウンロードの途中で、通信が切れた可能性があります。もう一度 `make setup` を実行してください。やり直しても、データベースのデータは消えません。
 
 ### <http://localhost:8000/docs> が開けない
 
