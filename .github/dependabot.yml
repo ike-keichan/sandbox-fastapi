@@ -32,7 +32,7 @@ updates:
       time: "09:00"
       timezone: Asia/Tokyo
     ignore:
-      # MySQL は長期サポート版を使う。メジャーバージョンの更新は、手で行う。
+      # MySQL は LTS を使う。メジャーバージョンの更新は、手で行う。
       - dependency-name: mysql
         update-types: ["version-update:semver-major"]
   # GitHub Actions のアクション

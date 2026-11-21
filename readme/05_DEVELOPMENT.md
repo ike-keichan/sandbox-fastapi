@@ -222,7 +222,7 @@ $ make py/test
 | 対象 | 方針 | 上げるときに直す場所 |
 | --- | --- | --- |
 | Python | 最新の安定版を使います。新しい版が出た直後は、対応していないライブラリがあるので、ビルドが通ってから上げます | `Dockerfile` のイメージ、`pyproject.toml` の `requires-python`、`ruff.toml` の `target-version` の3か所 |
-| MySQL | 長期サポート版（LTS）を使います。短い周期で出る版（Innovation）には上げません。Dependabot は、メジャーバージョンの更新を知らせない設定にしています | `docker-compose.yaml` のイメージ |
+| MySQL | LTS を使います。短い周期で出る版（Innovation）には上げません。Dependabot は、メジャーバージョンの更新を知らせない設定にしています | `docker-compose.yaml` のイメージ |
 | Poetry | 版を固定しています | `Dockerfile` の `poetry==...`。上げたら、`poetry.lock` も作り直します |
 | Python のパッケージ | Dependabot に任せます | |
 
