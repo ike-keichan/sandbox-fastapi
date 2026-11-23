@@ -1,6 +1,10 @@
 services:
   api:
     build: .
+    # 手元のパソコンと同じユーザーで動かす。番号は、Makefile が調べて渡す。
+    # root で動かすと、Linux では、コンテナが作ったファイル（.dockervenv、__pycache__ など）が
+    # root の持ち物になり、手元で消せなくなる。
+    user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
     volumes:
       - .dockervenv:/src/.venv
       - .:/src
