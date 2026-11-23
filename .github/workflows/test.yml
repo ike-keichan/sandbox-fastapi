@@ -24,7 +24,7 @@ jobs:
       - name: Build the containers and install the packages
         run: make setup
       - name: Start the containers
-        run: docker compose up -d --wait
+        run: make upd
       - name: Check the code
         run: make py/check
       - name: Run the tests

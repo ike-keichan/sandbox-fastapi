@@ -203,7 +203,7 @@ $ make py/test
 | 順番 | 内容 | 実行するコマンド |
 | --- | --- | --- |
 | 1 | 環境を作る | `make setup` |
-| 2 | コンテナを起動する | `docker compose up -d --wait` |
+| 2 | コンテナを起動する | `make upd` |
 | 3 | コードを検査する | `make py/check` |
 | 4 | テストを実行する | `make py/test` |
 | 5 | 起動した API を、MySQL につないだ状態で呼ぶ | `bash scripts/smoke.sh` |
