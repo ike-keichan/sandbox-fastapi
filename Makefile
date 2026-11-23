@@ -1,5 +1,9 @@
 .PHONY: up upd stop restart build down downv ps db/migrate db/reset py/install py/add py/add-d py/fix py/fix-lint py/fix-format py/check py/check-lint py/check-format py/update py/test python/login python/repl db/login db/repl setup
 
+# コンテナを、手元のパソコンと同じユーザーで動かすために、ユーザーの番号を渡す（docker-compose.yaml の user を参照）。
+export HOST_UID := $(shell id -u)
+export HOST_GID := $(shell id -g)
+
 ## コンテナ操作系
 # コンテナの起動
 up:
@@ -39,6 +43,7 @@ db/reset:
 ## Poetry操作系
 # パッケージインストール
 py/install:
+	mkdir -p .dockervenv
 	docker compose run --rm --no-deps api poetry install --no-root
 # パッケージ追加
 py/add:
@@ -87,7 +92,9 @@ db/repl:
 
 ## その他
 # セットアップ
+# パッケージを入れるフォルダ（.dockervenv）は、先に作る。ないと、Docker が root の持ち物として作ってしまう。
 setup:
+	mkdir -p .dockervenv
 	docker compose build
 	docker compose run --rm --no-deps api poetry install --no-root
 	docker compose up -d --force-recreate --wait
